@@ -1,0 +1,29 @@
+const offchain_metadata_tag = 0x01;
+const json_uri_end = ".json";
+
+cell pack_offchain_metadata(slice value) inline_ref {
+  return begin_cell().store_uint(offchain_metadata_tag, 8).store_slice(value).end_cell();
+}
+
+builder store_uint_as_slice(builder b, int val) asm ""
+  "ZERO"
+  "SWAP" "TRUE"
+  "WHILE:<{"
+  "}>DO<{"
+    "10 PUSHINT" "DIVMOD"
+    "48 PUSHINT" "ADD"
+    "3 ROLLREV"
+    "SWAP" "INC"
+    "SWAP"
+    "DUP" "0 NEQINT"
+  "}>"
+  "DROP"
+  "REPEAT:<{"
+    "8 STU"
+  "}>"
+;
+
+cell pack_item_offchain_metadata(slice base, int index) inline {
+  var content = begin_cell().store_slice(base).store_uint_as_slice(index).store_slice(json_uri_end).end_cell();
+  return pack_offchain_metadata(content.begin_parse());
+}
